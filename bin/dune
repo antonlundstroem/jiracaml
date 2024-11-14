@@ -1,0 +1,4 @@
+(executable
+ (public_name jiracaml)
+ (name main)
+ (libraries jiracaml))
