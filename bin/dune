@@ -1,4 +1,14 @@
 (executable
  (public_name jiracaml)
  (name main)
- (libraries jiracaml))
+ (libraries jiracaml yojson))
+
+(env
+  (dev
+    (flags (:standard -w -32 -w -34))))
+
+;; 32 unused-value-declaration
+;; 34 unused-type-declaration
+;; 27 unused-var-strict
+;; 69 unused-field
+;; 39 unused-rec-flag
