@@ -22,35 +22,31 @@ type entry = {
 *)
 (* Tuple with HashMap of configs and a List with the logs *)
 
-let read_stdin =
-  let chan = stdin in
-  let rec loop x =
-    match input_line chan with
-        | line ->
-            (* Printf.printf "This is a line: %s" line; *)
-            loop ((line ^ "\n") :: x)
-        | exception End_of_file -> List.rev x
-  in
-    loop []
+(*
+let print_stdin = In_channel.input_all In_channel.stdin |> Printf.printf "%s"
+*)
 
-let read_stdin_two = In_channel.input_all In_channel.stdin
-
-let parse_config string_of_config (*: (string list * string StringMap.t) *) =
-  (* let entries : entry list = [] in *)
-  let rec loop acc config entries =
-    match config with
-    | [] -> (acc, entries)
-    | hd :: tl -> loop (hd :: acc) tl (StringMap.add "foo" "bar" entries)
-    in
-      loop [] string_of_config StringMap.empty
+(* This works and now splits the input into two seperate list, one for config and one for tags *)
+let rec read_config x y =
+  match In_channel.input_line In_channel.stdin with
+  | Some "" -> read_config y x
+  | Some line -> read_config (line :: x) y
+  | None -> (List.rev y, List.rev x)
 
 
-let print_std = let inp = read_stdin in
-  List.iter (Printf.printf "%s") inp
+let rec nth_element list n =
+  match list with
+  | [] -> failwith "Index out of bounds" (* Handle empty list *)
+  | x :: xs -> if n = 0 then x else nth_element xs (n - 1)
 
 
-let () = let inp = read_stdin_two in
-  (* let cfg = parse_config inp in *)
-let first = String.split_on_char '\n' inp in
-  List.iter (Printf.printf "%s") first
+let () = let s = read_config [] [] in
+let n = nth_element (fst s) (List.length (fst s) -1) in
+  Printf.printf "%s" n
+
+(* in Printf.printf "First: %d\n" (List.length (fst s));
+Printf.printf "Second: %d\n" (List.length (snd s));
+List.iter (Printf.printf "%s") (snd s) *)
+
+
 
