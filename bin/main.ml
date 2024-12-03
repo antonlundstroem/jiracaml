@@ -1,4 +1,4 @@
-(* open Yojson.Basic.Util;; *)
+open Yojson.Basic.Util
 
 module StringMap = Map.Make(String)
 
@@ -12,25 +12,30 @@ type conf = {
   opt : string;
 
 }
+  *)
 
 type entry = {
-  start_t : string;
-  end_t : string;
-  tags : string list;
+  start_ : string;
+  end_ : string;
+  tags_ : string list;
 }
 
-*)
-(* Tuple with HashMap of configs and a List with the logs *)
+let entry_of_json json =
+  {
+    start_ = json |> member "start" |> to_string;
+    end_ = json |> member "end" |> to_string;
+    tags_ = json |> member "tags" |> to_list |> List.map to_string;
+  }
 
-(*
-let print_stdin = In_channel.input_all In_channel.stdin |> Printf.printf "%s"
-*)
-
-(* This works and now splits the input into two seperate list, one for config and one for tags *)
+(* Split incoming stind into two lists, one for config and one for tags *)
 let rec read_config x y =
   match In_channel.input_line In_channel.stdin with
   | Some "" -> read_config y x
-  | Some line -> read_config (line :: x) y
+  | Some line -> 
+      if line = "[" || line = "]" then
+        read_config x y
+      else
+        read_config (line :: x) y
   | None -> (List.rev y, List.rev x)
 
 
@@ -40,13 +45,53 @@ let rec nth_element list n =
   | x :: xs -> if n = 0 then x else nth_element xs (n - 1)
 
 
-let () = let s = read_config [] [] in
-let n = nth_element (fst s) (List.length (fst s) -1) in
-  Printf.printf "%s" n
+let clean s =
+  let len = String.length s in
+  if len > 0 && String.get s (len - 1) = ',' then
+    String.sub s 0 (len - 1)
+  else
+    s
 
-(* in Printf.printf "First: %d\n" (List.length (fst s));
-Printf.printf "Second: %d\n" (List.length (snd s));
-List.iter (Printf.printf "%s") (snd s) *)
+let () = let stdin = read_config [] [] in
+  let tags = (snd stdin) in
+  let entries = List.map (fun entry ->
+    (* Clean trailing comma *)
+    let s = clean entry in
+    let json = Yojson.Basic.from_string s in 
+    entry_of_json json
+  ) tags
+  in 
+  List.iter (fun entry ->
+    Printf.printf "%s " entry.start_;
+    Printf.printf "%s " entry.end_;
+    Printf.printf "%s " (String.concat "," entry.tags_);
+    print_newline()
+  ) entries
+
+(*
+let () =
+  let entries = List.map (fun entry ->
+    (* Clean trailing comma *)
+    let s = clean entry in
+    Printf.printf "%s" s;
+    let json = Yojson.Basic.from_string s in 
+    entry_of_json json
+  ) json_strings
+  in 
+  List.iter (fun entry ->
+    Printf.printf "%s " entry.start_;
+    Printf.printf "%s " entry.end_;
+    Printf.printf "%s " (String.concat "," entry.tags_);
+  ) entries
+*)
 
 
-
+(*
+let () = let stdin = read_config [] [] in
+let config = (fst stdin) 
+let tags = (snd stdin) in
+let nc = nth_element (config) (1) in
+let nt = nth_element (tags) (1) in
+Printf.printf "%s" nc;
+Printf.printf "%s" nt;
+*)
